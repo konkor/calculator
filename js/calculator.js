@@ -55,10 +55,10 @@ class Calculator extends React.Component {
     //console.log (val);
     switch (val) {
       case 'AC':
-        d.value = '';
+        d.value = '0';
         break;
       case '=':
-        let res = this.calc (d.value);
+        let res = this.calc (this.checkop (d.value));
         if (!Number.isFinite (res)) {
           this.setState ({
             error: res.toString ()
@@ -119,7 +119,7 @@ class Calculator extends React.Component {
       }
     }
     arr = text.split ('-');
-    if (arr.length > 1) {
+    if (arr.length > 1 && "+×÷".indexOf (arr[0][arr[0].length - 1]) == -1) {
       a = arr.shift ();
       if (a[a.length - 1] != 'e')
         return this.calc (a) - this.calc (arr.join("-"));
@@ -132,7 +132,8 @@ class Calculator extends React.Component {
     arr = text.split ('×');
     if (arr.length > 1) {
       a = arr.shift ();
-      return this.calc (a) * this.calc (arr.join("×"));
+      if (arr.length && arr[0]) return this.calc (a) * this.calc (arr.join("×"));
+      return this.calc (a);
     }
     arr = text.split ('÷');
     if (arr.length > 1) {
@@ -141,6 +142,31 @@ class Calculator extends React.Component {
     }
     if (arr[0].length) res = parseFloat (arr[0]);
     return res;
+  }
+
+  checkop (text) {
+    if (text.length < 1) return '';
+
+    let s = text, s2;
+    while (s != s2) {
+      s2 = s;
+      s = this.reduce (s);
+    }
+    //debug ('formula', s);
+    return s;
+  }
+
+  reduce (text) {
+    let s = text[0];
+    let c = s;
+    for (let i = 1; i < text.length; i++) {
+      if (("+×÷".indexOf (text[i]) > -1) && ("+-×÷".indexOf (c) > -1)) {
+        s = s.substring (0, s.length - 1);
+      }
+      c = text[i];
+      s += c;
+    }
+    return s;
   }
 
   checker(e) {
@@ -153,6 +179,7 @@ class Calculator extends React.Component {
       else if (c == '/') s = s.replace ('/', '÷');
       else s = s.substring (0, s.length - 1);
     }
+    if (s.length == 2 && s[0] == '0' && ".+-×÷".indexOf (c) == -1 ) s = c;
     if (s.length == 1 && (s[0]=="×" || s[0]=="÷"))
       s = '';
     if (s[s.length - 1]=="0") {
@@ -191,7 +218,7 @@ class Calculator extends React.Component {
       e (KeyPad, {id: 'clear', label: 'AC', css: 'clear', keypress: this.keypress}, null),
       e (KeyPad, {id: 'divide', label: '÷', css: 'fun', keypress: this.keypress}, null),
       e (KeyPad, {id: 'multiply', label: '×', css: 'fun', keypress: this.keypress}, null),
-      e (KeyPad, {id: 'substract', label: '-', css: 'fun', keypress: this.keypress}, null),
+      e (KeyPad, {id: 'subtract', label: '-', css: 'fun', keypress: this.keypress}, null),
       e (KeyPad, {id: 'seven', label: '7', keypress: this.keypress}, null),
       e (KeyPad, {id: 'eight', label: '8', keypress: this.keypress}, null),
       e (KeyPad, {id: 'nine', label: '9', keypress: this.keypress}, null),
@@ -202,7 +229,7 @@ class Calculator extends React.Component {
       e (KeyPad, {id: 'one', label: '1', keypress: this.keypress}, null),
       e (KeyPad, {id: 'two', label: '2', keypress: this.keypress}, null),
       e (KeyPad, {id: 'three', label: '3', keypress: this.keypress}, null),
-      e (KeyPad, {id: 'equal', label: '=', css: 'plus equal', keypress: this.keypress}, null),
+      e (KeyPad, {id: 'equals', label: '=', css: 'plus equal', keypress: this.keypress}, null),
       e (KeyPad, {id: 'zero', label: '0', css: 'zero', keypress: this.keypress}, null),
       e (KeyPad, {id: 'decimal', label: '.', keypress: this.keypress}, null)
     );
